@@ -1,0 +1,7 @@
+default: mmp-gdb
+build_dir: C:/SPL/mmp-gdb/Anchor_A3
+domains:
+  - name: mmp-gdb
+    build_dir: C:/SPL/mmp-gdb/Anchor_A3/mmp-gdb
+flash_order:
+  - mmp-gdb

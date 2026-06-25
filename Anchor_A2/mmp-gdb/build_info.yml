@@ -1,0 +1,58 @@
+cmake:
+  application:
+    configuration-dir: 'C:/SPL/mmp-gdb'
+    source-dir: 'C:/SPL/mmp-gdb'
+  board:
+    name: 'nrf52840dk'
+    path:
+     - 'C:/ncs/v3.3.1/zephyr/boards/nordic/nrf52840dk'
+    qualifiers: 'nrf52840'
+    revision: ''
+  devicetree:
+    bindings-dirs:
+     - 'C:/ncs/v3.3.1/nrf/dts/bindings'
+     - 'C:/SPL/zephyr-dw3000-examples/dw3000-decadriver/zephyr/dts/bindings'
+     - 'C:/ncs/v3.3.1/zephyr/dts/bindings'
+    files:
+     - 'C:/ncs/v3.3.1/zephyr/boards/nordic/nrf52840dk/nrf52840dk_nrf52840.dts'
+     - 'C:/SPL/mmp-gdb/../zephyr-dw3000-examples/dw3000-decadriver/zephyr/boards/shields/qorvo_dws3000/qorvo_dws3000.overlay'
+     - 'C:/SPL/mmp-gdb/../zephyr-dw3000-examples/dw3000-decadriver/zephyr/boards/shields/qorvo_dws3000/boards/nrf52840dk_nrf52840.overlay'
+    include-dirs:
+     - 'C:/ncs/v3.3.1/nrf/include'
+     - 'C:/ncs/v3.3.1/nrf/dts/common'
+     - 'C:/ncs/v3.3.1/nrf/dts/riscv'
+     - 'C:/ncs/v3.3.1/nrf/dts/arm'
+     - 'C:/ncs/v3.3.1/nrf/dts'
+     - 'C:/SPL/zephyr-dw3000-examples/dw3000-decadriver/zephyr/dts'
+     - 'C:/ncs/v3.3.1/zephyr/include'
+     - 'C:/ncs/v3.3.1/zephyr/include/zephyr'
+     - 'C:/ncs/v3.3.1/zephyr/dts/common'
+     - 'C:/ncs/v3.3.1/zephyr/dts/vendor'
+     - 'C:/ncs/v3.3.1/zephyr/dts/rx'
+     - 'C:/ncs/v3.3.1/zephyr/dts/x86'
+     - 'C:/ncs/v3.3.1/zephyr/dts/xtensa'
+     - 'C:/ncs/v3.3.1/zephyr/dts/sparc'
+     - 'C:/ncs/v3.3.1/zephyr/dts/riscv'
+     - 'C:/ncs/v3.3.1/zephyr/dts/posix'
+     - 'C:/ncs/v3.3.1/zephyr/dts/arm64'
+     - 'C:/ncs/v3.3.1/zephyr/dts/arm'
+     - 'C:/ncs/v3.3.1/zephyr/dts/arc'
+     - 'C:/ncs/v3.3.1/zephyr/dts'
+  kconfig:
+    files:
+     - 'C:/ncs/v3.3.1/zephyr/boards/nordic/nrf52840dk/nrf52840dk_nrf52840_defconfig'
+     - 'C:/SPL/mmp-gdb/prj.conf'
+     - 'C:/SPL/mmp-gdb/Anchor_A2/mmp-gdb/zephyr/misc/generated/extra_kconfig_options.conf'
+     - 'C:/SPL/mmp-gdb/Anchor_A2/mmp-gdb/zephyr/.config.sysbuild'
+    user-files:
+     - 'C:/SPL/mmp-gdb/prj.conf'
+  toolchain:
+    name: 'zephyr'
+    path: 'C:/ncs/toolchains/936afb6332/opt/zephyr-sdk'
+  vendor-specific:
+    nordic:
+      svdfile: 'C:/ncs/v3.3.1/modules/hal/nordic/nrfx/bsp/stable/mdk/nrf52840.svd'
+  zephyr:
+    version: '4.3.99'
+    zephyr-base: 'C:/ncs/v3.3.1/zephyr'
+version: '0.1.0'

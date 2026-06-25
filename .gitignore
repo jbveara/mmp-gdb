@@ -1,0 +1,40 @@
+# ── Zephyr / nRF Connect Build Artifacts ──────────────────────────
+build/
+twister-out/
+*.bin
+*.hex
+*.elf
+*.map
+*.lst
+
+# ── nRF Connect / West workspace (if this is a standalone app) ────
+# Uncomment these if your repo is just the app, not the whole west workspace
+# .west/
+# modules/
+# zephyr/
+# bootloader/
+# nrf/
+# nrfxlib/
+# tools/
+
+# ── VS Code ────────────────────────────────────────────────────────
+.vscode/settings.json
+.vscode/launch.json
+.vscode/c_cpp_properties.json
+# Keep tasks.json and extensions.json if you want to share them
+!.vscode/tasks.json
+!.vscode/extensions.json
+
+# ── Kconfig / CMake generated files ───────────────────────────────
+*.cmake
+CMakeCache.txt
+CMakeFiles/
+
+# ── Python / West ─────────────────────────────────────────────────
+__pycache__/
+*.pyc
+.west/
+
+# ── OS junk ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

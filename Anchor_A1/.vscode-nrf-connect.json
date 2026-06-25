@@ -1,0 +1,21 @@
+{
+  "toolchainPath": "c:\\ncs\\toolchains\\936afb6332",
+  "sdkPath": "c:\\ncs\\v3.3.1",
+  "board": "nrf52840dk/nrf52840",
+  "boardDir": "c:\\ncs\\v3.3.1\\zephyr\\boards\\nordic\\nrf52840dk",
+  "boardDirs": [
+    "c:\\ncs\\v3.3.1\\zephyr\\boards\\nordic\\nrf52840dk"
+  ],
+  "optimizations": "none",
+  "cmakeArgs": [
+    "-Dmmp-gdb_ROLE=ANCHOR_A1",
+    "-DSHIELD=qorvo_dws3000",
+    "-DBOARD_ROOT=C:/SPL/zephyr-dw3000-examples/dw3000-decadriver/zephyr"
+  ],
+  "confFiles": [],
+  "buildDirectory": "Anchor_A1",
+  "kconfigFragments": [],
+  "snippets": [],
+  "dtcOverlays": [],
+  "extraDtcOverlays": []
+}
