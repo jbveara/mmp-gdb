@@ -620,6 +620,17 @@
     "CONFIG_FPU",
     "y",
     "bool",
+    "y",
+    "assign",
+    [
+      "C:/SPL/mmp-gdb/prj.conf",
+      17
+    ]
+  ],
+  [
+    "CONFIG_LIBLC3",
+    "y",
+    "bool",
     null,
     "unset",
     null
@@ -5397,6 +5408,14 @@
     null
   ],
   [
+    "CONFIG_SW_CODEC_LC3_T2_SOFTWARE",
+    "y",
+    "bool",
+    null,
+    "unset",
+    null
+  ],
+  [
     "CONFIG_NRF_FUEL_GAUGE",
     "y",
     "bool",
@@ -6377,11 +6396,11 @@
     "CONFIG_ARM_MPU_REGION_MIN_ALIGN_AND_SIZE",
     "n",
     "int",
-    "32",
+    "128",
     "default",
     [
       "C:/ncs/v3.3.1/zephyr/arch/arm\\core\\mpu/Kconfig",
-      14
+      12
     ]
   ],
   [
@@ -6490,6 +6509,36 @@
       "C:/ncs/v3.3.1/zephyr/arch/arm\\core/Kconfig",
       203
     ]
+  ],
+  [
+    "CONFIG_ARM_STORE_EXC_RETURN",
+    "n",
+    "bool",
+    "y",
+    "default",
+    [
+      "C:/ncs/v3.3.1/zephyr/arch/arm\\core/Kconfig",
+      271
+    ]
+  ],
+  [
+    "CONFIG_FP_HARDABI",
+    "y",
+    "bool",
+    "y",
+    "default",
+    [
+      "C:/ncs/v3.3.1/zephyr/arch/arm\\core/Kconfig",
+      279
+    ]
+  ],
+  [
+    "CONFIG_FP_SOFTABI",
+    "y",
+    "bool",
+    null,
+    "unset",
+    null
   ],
   [
     "CONFIG_FP16",
@@ -6668,6 +6717,17 @@
     "select",
     [
       "ARM_STACK_PROTECTION && !BUILTIN_STACK_GUARD && ARM_MPU && ARM"
+    ]
+  ],
+  [
+    "CONFIG_MPU_STACK_GUARD_MIN_SIZE_FLOAT",
+    "n",
+    "int",
+    "128",
+    "default",
+    [
+      "C:/ncs/v3.3.1/zephyr/arch/arm\\core\\mpu/Kconfig",
+      33
     ]
   ],
   [
@@ -7225,6 +7285,17 @@
     "select",
     [
       "ARM_MPU && CPU_HAS_MPU"
+    ]
+  ],
+  [
+    "CONFIG_FPU_SHARING",
+    "y",
+    "bool",
+    "y",
+    "assign",
+    [
+      "C:/SPL/mmp-gdb/prj.conf",
+      18
     ]
   ],
   [
@@ -10184,9 +10255,12 @@
     "CONFIG_CBPRINTF_FP_SUPPORT",
     "y",
     "bool",
-    null,
-    "unset",
-    null
+    "y",
+    "assign",
+    [
+      "C:/SPL/mmp-gdb/prj.conf",
+      19
+    ]
   ],
   [
     "CONFIG_CBPRINTF_FP_A_SUPPORT",

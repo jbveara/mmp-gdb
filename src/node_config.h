@@ -40,10 +40,30 @@
 #define TX_ANT_DLY       16385U
 #define RX_ANT_DLY       16385U
 
-/* Processing delay δ_i at each responder (same for all nodes in Phase 2).
- * Must be long enough for SPI + processing overhead after RX.
- * Tighten after characterising actual δ_i. */
-#define RESP_TX_DELAY_UUS  3000U
+/* Reply delay for all responder nodes, in raw 40-bit DWT timestamp ticks.
+ *
+ * This single constant is used in two places and must be identical in both:
+ *   1. ring_exchange.c send_delayed() — programs the hardware TX schedule
+ *   2. ring_distances.c              — subtracted in every ToF formula
+ *
+ * The formula delta must match what the hardware actually stamps.
+ * predicted_tx_ts computes:
+ *   TX_ts = ((rx_ts + RESP_TX_DELAY_TICKS) & ~0x1FF) + TX_ANT_DLY
+ *
+ * So the stamped delta (TX_ts - RX_ts) = RESP_TX_DELAY_TICKS + TX_ANT_DLY
+ * plus up to ±256 ticks of 512-tick register quantisation (~±1.2 mm).
+ *
+ * RX_ANT_DLY does not appear here — it cancels symmetrically across the
+ * full two-way flight in the ToF formulas.
+ *
+ * Therefore the correct formula constant is RESP_TX_DELAY_TICKS + TX_ANT_DLY,
+ * which is what DELTA_TICKS resolves to in ring_distances.c.
+ *
+ * Do NOT use UUS_TO_DWT_TIME — that constant uses a different tick scaling
+ * (65536 per µs vs the true hardware rate of 63897.6 ticks/µs).
+ */
+#define RESP_TX_DELAY_TICKS  192000000ULL
+#define DELTA_TICKS          (RESP_TX_DELAY_TICKS + TX_ANT_DLY)
 
 /* A1 listens for each expected message — generous timeout covers
  * two hops of RESP_TX_DELAY_UUS plus air time plus margin. */

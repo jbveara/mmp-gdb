@@ -17,6 +17,6 @@ cmake:
      - 'c:/SPL/mmp-gdb/sysbuild.conf'
 version: '0.1.0'
 west:
-  command: 'C:\ncs\toolchains\936afb6332\opt\bin\Scripts\west build --build-dir c:/SPL/mmp-gdb/Anchor_A3 c:/SPL/mmp-gdb --pristine --board nrf52840dk/nrf52840 -- -DCONFIG_DEBUG_THREAD_INFO=y -Dmmp-gdb_ROLE=ANCHOR_A3 -DSHIELD=qorvo_dws3000 -DBOARD_ROOT=C:/SPL/zephyr-dw3000-examples/dw3000-decadriver/zephyr'
+  command: 'C:\ncs\toolchains\936afb6332\opt\bin\Scripts\west build --build-dir c:/SPL/mmp-gdb/Anchor_A3 c:/SPL/mmp-gdb --pristine --board nrf52840dk/nrf52840 -- -DDEBUG_THREAD_INFO=On -DCONFIG_DEBUG_THREAD_INFO=y -Dmmp-gdb_ROLE=ANCHOR_A3 -DSHIELD=qorvo_dws3000 -Dmmp-gdb_DEBUG_THREAD_INFO=On -DBOARD_ROOT=C:/SPL/zephyr-dw3000-examples/dw3000-decadriver/zephyr'
   topdir: 'c:\ncs\v3.3.1'
   version: '1.5.0'

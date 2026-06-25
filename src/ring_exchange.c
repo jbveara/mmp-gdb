@@ -18,6 +18,7 @@
 
 #include "ring_exchange.h"
 #include "node_config.h"
+#include "ring_distances.h"
 
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
@@ -126,7 +127,11 @@ static int send_delayed(uint8_t fc, uint16_t src,
                         const uint8_t *payload, uint8_t plen,
                         uint64_t rx_ts, uint32_t *tx_time_out)
 {
-    uint32_t tx_time = (uint32_t)((rx_ts + (RESP_TX_DELAY_UUS * UUS_TO_DWT_TIME)) >> 8);
+    /* Schedule TX using RESP_TX_DELAY_TICKS directly in raw tick space.
+     * This ensures the hardware-stamped delta matches RESP_TX_DELAY_TICKS
+     * exactly (to within the 256-tick sub-byte rounding), so ring_distances.c
+     * can use the same constant without any per-board calibration. */
+    uint32_t tx_time = (uint32_t)((rx_ts + RESP_TX_DELAY_TICKS) >> 8);
     dwt_setdelayedtrxtime(tx_time);
     if (tx_time_out) *tx_time_out = tx_time;
 
@@ -177,10 +182,12 @@ static int wait_rx(uint64_t *rx_ts_out)
     return rx_buf[FRAME_FC_IDX];
 }
 
-/* Compute predicted TX timestamp from delayed TX time */
+/* Compute predicted TX timestamp from delayed TX register value.
+ * The register holds bits[39:8] of the 40-bit timestamp, so shift left 8
+ * and add the TX antenna delay (which the hardware adds to the stamp). */
 static uint64_t predicted_tx_ts(uint32_t tx_time)
 {
-    return (((uint64_t)tx_time) << 8) + TX_ANT_DLY;
+    return (((uint64_t)(tx_time & 0xFFFFFFFEUL)) << 8) + TX_ANT_DLY;
 }
 
 /* ---------------------------------------------------------------------------
@@ -349,6 +356,9 @@ void ring_responder_loop(void)
 
         rt.valid = 1;
         ring_print_timestamps(&rt);
+
+        ring_distances_t dist;
+        ring_calc_distances(&rt, &dist);
     }
 }
 
@@ -427,6 +437,9 @@ void ring_responder_loop(void)
 
         rt.valid = 1;
         ring_print_timestamps(&rt);
+
+        ring_distances_t dist;
+        ring_calc_distances(&rt, &dist);
     }
 }
 

@@ -12,6 +12,7 @@
 #include "port.h"
 #include "node_config.h"
 #include "ring_exchange.h"
+#include "ring_distances.h"
 
 int main(void)
 {
@@ -37,10 +38,12 @@ int main(void)
 
 #if defined(ROLE_ANCHOR_A1)
     round_timestamps_t rt;
+    ring_distances_t dist;
     printk("A1: starting — period %u ms\n", ROUND_PERIOD_MS);
     while (1) {
         if (ring_run_round(&rt) == 0) {
             ring_print_timestamps(&rt);
+            ring_calc_distances(&rt, &dist);
         } else {
             printk("A1: round failed\n");
         }

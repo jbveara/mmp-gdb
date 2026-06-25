@@ -29,6 +29,7 @@ endif()
 target_sources(app PRIVATE
     src/main.c
     src/ring_exchange.c
+    src/ring_distances.c
     ../zephyr-dw3000-examples/platform/port.c
     ../zephyr-dw3000-examples/platform/config_options.c
     ../zephyr-dw3000-examples/examples/shared_data/shared_functions.c
