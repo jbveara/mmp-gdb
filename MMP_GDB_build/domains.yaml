@@ -1,0 +1,7 @@
+default: mmp-gdb
+build_dir: C:/SPL/mmp-gdb/MMP_GDB_build
+domains:
+  - name: mmp-gdb
+    build_dir: C:/SPL/mmp-gdb/MMP_GDB_build/mmp-gdb
+flash_order:
+  - mmp-gdb

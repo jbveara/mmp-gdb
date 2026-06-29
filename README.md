@@ -1,94 +1,169 @@
-# MMP-GDB Ring Exchange
+# MMP-GDB — Host/Firmware Split
 
-Phase 2 of the SPL development roadmap. Three nRF52840DK + DWM3000 boards
-perform a bidirectional ring message exchange, collecting six timestamps
-(T1–T6) per round for offline processing.
-
-## Project layout
+## Architecture
 
 ```
-mmp-gdb/
-├── CMakeLists.txt
-├── prj.conf
-└── src/
-    ├── main.c           — thin entry point, role-dispatches to ring_exchange
-    ├── ring_exchange.c  — all UWB message chaining logic
-    ├── ring_exchange.h  — public API + timestamp struct
-    └── node_config.h    — addresses, timing constants, frame format
+Central laptop
+    │
+    ├── SSH → RPi-A1 → nRF52840-DK (USB/J-Link UART)
+    ├── SSH → RPi-A2 → nRF52840-DK
+    └── SSH → RPi-A3 → nRF52840-DK
+
+Each RPi runs:  python3 anchor.py --role 1 --port /dev/ttyACM0
 ```
 
-Platform sources (`port.c`, `config_options.c`) and the decadriver are
-referenced directly from `../zephyr-dw3000-examples/` — no duplication.
+## Files
 
-## Build & flash
+| File | Runs on | Purpose |
+|------|---------|---------|
+| `main.c` | nRF52840 | Shell commands, hardware init, role dispatch |
+| `ring_exchange.h/.c` | nRF52840 | UWB TX/RX protocol, timestamp capture, TS line output |
+| `node_config.h` | nRF52840 | Timing constants, frame layout |
+| `prj.conf` | nRF52840 | Zephyr build config |
+| `anchor.py` | Raspberry Pi / PC | Serial bridge, distance math, stdout output |
 
-Open three VS Code NRF Connect extension terminals (or PowerShell with
-`west` on PATH). Run one build+flash per board:
+`ring_distances.h` and `ring_distances.c` are no longer needed — remove from CMake.
 
-### Board 1 — A1 (initiator)
-```powershell
-west build --pristine `
-  --build-dir C:/SPL/mmp-gdb/build_A1 `
-  C:/SPL/mmp-gdb `
-  --board nrf52840dk/nrf52840 `
-  -- -DROLE=ANCHOR_A1 `
-     -DSHIELD=qorvo_dws3000 `
-     -DBOARD_ROOT=C:/SPL/zephyr-dw3000-examples/dw3000-decadriver/zephyr
+---
 
-west flash --build-dir C:/SPL/mmp-gdb/build_A1
+## Why Zephyr Shell?
+
+The Zephyr shell subsystem (`CONFIG_SHELL=y`) provides:
+- Full UART RX handling with buffering — no custom ISR or ring buffer code needed
+- Human-readable commands, debuggable with any terminal (PuTTY, minicom, screen)
+- Shell log backend safely interleaves log messages with output lines
+- Single well-tested Kconfig symbol — no choice/dependency issues
+
+---
+
+## Build — single firmware binary for all three boards
+
+Remove any `-DROLE_ANCHOR_A1/A2/A3` from `CMakeLists.txt`.
+
+```cmake
+target_sources(app PRIVATE
+    src/main.c
+    src/ring_exchange.c
+    # ring_distances.c — deleted
+)
 ```
 
-### Board 2 — A2 (responder, leg 1)
-```powershell
-west build --pristine `
-  --build-dir C:/SPL/mmp-gdb/build_A2 `
-  C:/SPL/mmp-gdb `
-  --board nrf52840dk/nrf52840 `
-  -- -DROLE=ANCHOR_A2 `
-     -DSHIELD=qorvo_dws3000 `
-     -DBOARD_ROOT=C:/SPL/zephyr-dw3000-examples/dw3000-decadriver/zephyr
-
-west flash --build-dir C:/SPL/mmp-gdb/build_A2
+```bash
+west build --build-dir build --pristine --board nrf52840dk/nrf52840 \
+    -- -DSHIELD=qorvo_dws3000 \
+       -DBOARD_ROOT=C:/SPL/zephyr-dw3000-examples/dw3000-decadriver/zephyr
 ```
 
-### Board 3 — A3 (responder, leg 2 + ring close)
-```powershell
-west build --pristine `
-  --build-dir C:/SPL/mmp-gdb/build_A3 `
-  C:/SPL/mmp-gdb `
-  -- -DROLE=ANCHOR_A3 `
-     -DSHIELD=qorvo_dws3000 `
-     -DBOARD_ROOT=C:/SPL/zephyr-dw3000-examples/dw3000-decadriver/zephyr
+---
 
-west flash --build-dir C:/SPL/mmp-gdb/build_A3
+## Running
+
+### On Windows (testing)
+```bash
+python anchor.py --role 1 --port COM23 --baud 115200
 ```
 
-## Expected RTT output
-
-**A1 (every 500 ms):**
-```
-RING seq=0 T1=123456789 T2=123456900 T3=123520000 T4=123520120 T5=123580000 T6=123580150
-RING seq=1 T1=...
+### On Raspberry Pi (deployment)
+```bash
+python3 anchor.py --role 1 --port /dev/ttyACM0
 ```
 
-**A2 (each ring):**
+Start A2 and A3 before A1. Responders sit in their listen loop until
+A1 begins transmitting.
+
+---
+
+## Startup sequence
+
 ```
-A2: fwd sent (seq=0 T2=123456900 T3=123520000)
+# Board boots — shell starts automatically
+*** Booting nRF Connect SDK v3.3.1 ***
+uart:~$ INF,MMP-GDB_ready — type: role <1|2|3>  then: start
+
+# anchor.py sends "role 1\n"
+uart:~$ role 1
+INF,role_set_A1 (initiator)
+
+# anchor.py sends "start\n"
+uart:~$ start
+INF,starting
+RDY,1,192016385,16385
+INF,A1_starting_period_500ms
+TS,1,0,12345678,...
+TS,1,1,12345699,...
 ```
 
-**A3 (each ring):**
+---
+
+## Output format
+
+**stdout** (one line per round, pipe-friendly):
 ```
-A3: close sent (seq=0 T4=123520120 T5=123580000)
+DIST,<role>,<seq>,<d_P1P2_m>,<d_P1P3_m>,<d_P2P3_m>
+DIST,1,42,1.2340,3.4560,2.1230
 ```
 
-## Timestamp format
+**stderr** (firmware passthrough, prefixed `FW>`):
+```
+FW> INF,MMP-GDB_ready — type: role <1|2|3>  then: start
+FW> RDY,1,192016385,16385
+FW> INF,A1_starting_period_500ms
+```
 
-All values are raw DWT timer units (~15.65 ps per unit, 40-bit counter).
-To convert to nanoseconds: `T_ns = T_dwt * 0.015650040064103`
+Distances of `-1.0` indicate a ranging error for that pair in that round.
 
-## Next steps
+---
 
-1. Verify ring closes reliably (no timeouts) at 0.5 s period
-2. Reduce `ROUND_PERIOD_MS` and `RESP_TX_DELAY_UUS` to characterise minimum stable period
-3. Add reverse ring (A1 → A3 → A2 → A1) for second measurement set
-4. Add HMAC-SHA256 commitment layer (Phase 3)
+## Serial protocol
+
+### Host → firmware (shell commands)
+```
+role <1|2|3>    Set anchor role
+start           Initialise DW3000 and begin
+help            List all available commands (Zephyr built-in)
+```
+
+### Firmware → host (structured lines, interspersed with shell prompt)
+```
+RDY,<role>,<DELTA_TICKS>,<TX_ANT_DLY>    Startup confirmation
+TS,<role>,<seq>,<ts0..5>,<ci0..5>        One per completed round
+ERR,<seq>,<reason>                        Error
+INF,<message>                             Informational
+uart:~$                                   Shell prompt (ignored by anchor.py)
+```
+
+---
+
+## Manual testing with a terminal
+
+You can drive the board directly from PuTTY or any serial terminal:
+
+```
+uart:~$ role 2
+INF,role_set_A2 (responder)
+uart:~$ start
+INF,starting
+RDY,2,192016385,16385
+INF,A2_listening
+```
+
+Tab completion and `help` work as on any Zephyr shell.
+
+---
+
+## Central aggregation (optional)
+
+```bash
+# On central laptop — collect all three streams
+ssh pi@rpi-a1 python3 anchor.py --role 1 | tee a1.csv &
+ssh pi@rpi-a2 python3 anchor.py --role 2 | tee a2.csv &
+ssh pi@rpi-a3 python3 anchor.py --role 3 | tee a3.csv &
+```
+
+---
+
+## Next step — USB CDC ACM
+
+For RPi deployment, switching to `CONFIG_USB_CDC_ACM=y` eliminates
+J-Link driver dependencies on the RPi. The board appears as
+`/dev/ttyACM0` with no J-Link tooling needed.

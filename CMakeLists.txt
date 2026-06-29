@@ -13,23 +13,22 @@ zephyr_library_compile_options(-O1)
 # Pull ROLE from sysbuild context into this image cmake context
 zephyr_get(ROLE SYSBUILD GLOBAL)
 
-if(ROLE STREQUAL "ANCHOR_A1")
-    add_definitions(-DROLE_ANCHOR_A1)
-    message(STATUS "MMP-GDB role: ANCHOR_A1")
-elseif(ROLE STREQUAL "ANCHOR_A2")
-    add_definitions(-DROLE_ANCHOR_A2)
-    message(STATUS "MMP-GDB role: ANCHOR_A2")
-elseif(ROLE STREQUAL "ANCHOR_A3")
-    add_definitions(-DROLE_ANCHOR_A3)
-    message(STATUS "MMP-GDB role: ANCHOR_A3")
-else()
-    message(FATAL_ERROR "No role defined. Add CMake arg: -Dmmp-gdb_ROLE=ANCHOR_A1 (or A2/A3)")
-endif()
+#if(ROLE STREQUAL "ANCHOR_A1")
+#    add_definitions(-DROLE_ANCHOR_A1)
+#    message(STATUS "MMP-GDB role: ANCHOR_A1")
+#elseif(ROLE STREQUAL "ANCHOR_A2")
+#    add_definitions(-DROLE_ANCHOR_A2)
+#    message(STATUS "MMP-GDB role: ANCHOR_A2")
+#elseif(ROLE STREQUAL "ANCHOR_A3")
+#    add_definitions(-DROLE_ANCHOR_A3)
+#    message(STATUS "MMP-GDB role: ANCHOR_A3")
+#else()
+#    message(FATAL_ERROR "No role defined. Add CMake arg: -Dmmp-gdb_ROLE=ANCHOR_A1 (or A2/A3)")
+#endif()
 
 target_sources(app PRIVATE
     src/main.c
     src/ring_exchange.c
-    src/ring_distances.c
     ../zephyr-dw3000-examples/platform/port.c
     ../zephyr-dw3000-examples/platform/config_options.c
     ../zephyr-dw3000-examples/examples/shared_data/shared_functions.c

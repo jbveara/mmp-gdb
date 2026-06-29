@@ -1,0 +1,22 @@
+cmake:
+  board:
+    name: 'nrf52840dk'
+    path:
+     - 'C:/ncs/v3.3.1/zephyr/boards/nordic/nrf52840dk'
+    qualifiers: 'nrf52840'
+    revision: ''
+  images:
+   - name: 'mmp-gdb'
+     source-dir: 'C:/SPL/mmp-gdb'
+     type: 'MAIN'
+  kconfig:
+    files:
+     - 'C:/SPL/mmp-gdb/MMP_GDB_build/_sysbuild/empty.conf'
+     - 'c:/SPL/mmp-gdb/sysbuild.conf'
+    user-files:
+     - 'c:/SPL/mmp-gdb/sysbuild.conf'
+version: '0.1.0'
+west:
+  command: 'C:\ncs\toolchains\936afb6332\opt\bin\Scripts\west build --build-dir c:/SPL/mmp-gdb/MMP_GDB_build c:/SPL/mmp-gdb --pristine --board nrf52840dk/nrf52840 -- -DDEBUG_THREAD_INFO=On -DCONFIG_DEBUG_THREAD_INFO=y -DSHIELD=qorvo_dws3000 -Dmmp-gdb_DEBUG_THREAD_INFO=On -DBOARD_ROOT=C:/SPL/zephyr-dw3000-examples/dw3000-decadriver/zephyr'
+  topdir: 'c:\ncs\v3.3.1'
+  version: '1.5.0'
