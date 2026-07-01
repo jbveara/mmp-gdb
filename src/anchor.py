@@ -15,6 +15,11 @@ Output (stdout, one line per completed round):
 Errors and informational messages from the firmware are forwarded to
 stderr with a "FW>" prefix so they don't pollute distance output.
 
+If --log FILE is given, all log records (FW lines, DIST lines, warnings,
+info, and — with --verbose — debug lines) are additionally written to
+that file via the logging module, so a single consistent stream is kept
+on disk for post-run analysis.
+
 Exit codes:
     0  — clean shutdown (SIGINT / SIGTERM)
     1  — fatal hardware / serial error
@@ -235,11 +240,10 @@ def parse_ts_line(line: str) -> Optional[RoundTimestamps]:
 # ---------------------------------------------------------------------------
 
 class SerialBridge:
-    def __init__(self, port: str, baud: int, role: int, log_file=None):
+    def __init__(self, port: str, baud: int, role: int):
         self.port     = port
         self.baud     = baud
         self.role     = role
-        self.log_file = log_file
         self._ser: Optional[serial.Serial] = None
 
     def open(self):
@@ -335,11 +339,9 @@ class SerialBridge:
                 pass
 
     def _handle_non_ts(self, line: str):
-        """Forward firmware ERR/INF/RDY lines to stderr."""
+        """Log firmware ERR/INF/RDY lines (stderr, and log file if configured)."""
         if line:
-            print(f"FW> {line}", file=sys.stderr, flush=True)
-            if self.log_file:
-                self.log_file.write(f"FW> {line}\n")
+            log.info("FW> %s", line)
 
     def run(self):
         """Main read loop — yields one DIST line to stdout per round."""
@@ -367,7 +369,7 @@ class SerialBridge:
                 self._handle_non_ts(line)
                 continue
 
-            log.debug("FW> %s", line)   # echo raw TS line in verbose mode
+            log.debug("RAW> %s", line)   # echo raw TS line in verbose mode
 
             rt = parse_ts_line(line)
             if rt is None:
@@ -386,8 +388,8 @@ class SerialBridge:
                 f"DIST,{rt.role},{rt.seq},"
                 f"{dist.d_P1P2:.4f},{dist.d_P1P3:.4f},{dist.d_P2P3:.4f}"
             )
-            log.debug(out)   # verbose: distance line also visible on stderr, tagged by logger
-            print(out, flush=True)
+            print(out, flush=True)   # distance output goes to stdout only
+            log.info(out)            # also captured by --log file (and stderr at INFO+)
 
     def close(self):
         if self._ser and self._ser.is_open:
@@ -418,35 +420,41 @@ def main():
     )
     parser.add_argument(
         "--log", type=str, default=None,
-        help="Optional path to append all output lines to a file",
+        help="Optional path to append all log output (FW lines, DIST lines, "
+             "warnings, info) to a file",
     )
     parser.add_argument(
         "--verbose", action="store_true",
-        help="Enable debug logging to stderr",
+        help="Enable debug logging to stderr/log file",
     )
     args = parser.parse_args()
 
-    logging.basicConfig(
-        stream=sys.stderr,
-        level=logging.DEBUG if args.verbose else logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        datefmt="%H:%M:%S",
-    )
+    log_level = logging.DEBUG if args.verbose else logging.INFO
+    fmt = "%(asctime)s %(levelname)s %(name)s: %(message)s"
+    datefmt = "%H:%M:%S"
 
-    log_file = open(args.log, "a") if args.log else None
+    handlers = [logging.StreamHandler(sys.stderr)]
+    if args.log:
+        # delay=False: open immediately so a bad path fails fast, before
+        # we ever touch the serial port.
+        file_handler = logging.FileHandler(args.log, mode="a", delay=False)
+        handlers.append(file_handler)
+
+    for h in handlers:
+        h.setFormatter(logging.Formatter(fmt, datefmt=datefmt))
+
+    logging.basicConfig(level=log_level, handlers=handlers)
 
     bridge = SerialBridge(
         port=args.port,
         baud=args.baud,
         role=args.role,
-        log_file=log_file,
     )
 
     def _shutdown(sig, frame):
         log.info("Signal %d received — shutting down", sig)
         bridge.close()
-        if log_file:
-            log_file.close()
+        logging.shutdown()
         sys.exit(0)
 
     signal.signal(signal.SIGINT,  _shutdown)
@@ -464,8 +472,7 @@ def main():
         sys.exit(1)
     finally:
         bridge.close()
-        if log_file:
-            log_file.close()
+        logging.shutdown()
 
 
 if __name__ == "__main__":
