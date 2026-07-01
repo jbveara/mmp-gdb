@@ -25,8 +25,8 @@
 /* ---------------------------------------------------------------------------
  * Antenna delays
  * -------------------------------------------------------------------------*/
-#define TX_ANT_DLY  16385U
-#define RX_ANT_DLY  16385U
+#define TX_ANT_DLY  16399U
+#define RX_ANT_DLY  16399U
 
 /* ---------------------------------------------------------------------------
  * Reply delay — programmed by responder hardware; also used by host Python

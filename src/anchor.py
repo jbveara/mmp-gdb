@@ -47,7 +47,7 @@ METRES_PER_TICK   = SPEED_OF_LIGHT / DWT_FREQ_HZ   # ~4.692e-3 mm / tick
 # These must match node_config.h RESP_TX_DELAY_TICKS and TX_ANT_DLY.
 # They are also verified at runtime against the RDY line from the firmware.
 RESP_TX_DELAY_TICKS = 192_000_000
-TX_ANT_DLY          = 16_385
+TX_ANT_DLY          = 16_399
 DELTA_TICKS         = RESP_TX_DELAY_TICKS + TX_ANT_DLY  # nominal delta
 
 # Carrier integrator → ppm (ch5, 6.8 Mbps, from DW3000 User Manual)
@@ -118,9 +118,9 @@ def calc_distances_a1(rt: RoundTimestamps) -> Distances:
     D_A2 = corrected_d(ci[1])   # Msg2 sent by A2
     D_A3 = corrected_d(ci[4])   # Msg5 sent by A3
 
-    tof_P1P2 = (T[1] - T[0] - D_A2) / 2.0
-    tof_P1P3 = (T[4] - T[3] - D_A3) / 2.0
-    tof_P2P3 = (T[5] - T[3]) - tof_P1P3 - tof_P1P2 - D_A3 - D_A2
+    tof_P1P2 = (T[1] - T[0] - DELTA_TICKS) / 2.0
+    tof_P1P3 = (T[4] - T[3] - DELTA_TICKS) / 2.0
+    tof_P2P3 = (T[5] - T[3]) - tof_P1P3 - tof_P1P2 - DELTA_TICKS - DELTA_TICKS
 
     return Distances(
         d_P1P2=_tof_to_metres(tof_P1P2, "A1_P1P2", seq),
@@ -148,9 +148,9 @@ def calc_distances_a2(rt: RoundTimestamps) -> Distances:
     D_A3_rev = corrected_d(ci[4])   # Msg5 from A3 — for P1P3
     D_A1     = corrected_d(ci[3])   # Msg4 from A1
 
-    tof_P2P3 = (T[2] - T[1] - D_A3_fwd) / 2.0
-    tof_P1P3 = (T[4] - T[2] - D_A1 - D_A3_rev) / 2.0
-    tof_P1P2 = (T[3] - T[1]) - tof_P2P3 - tof_P1P3 - D_A3_fwd - D_A1
+    tof_P2P3 = (T[2] - T[1] - DELTA_TICKS) / 2.0
+    tof_P1P3 = (T[4] - T[2] - DELTA_TICKS - DELTA_TICKS) / 2.0
+    tof_P1P2 = (T[3] - T[1]) - tof_P2P3 - tof_P1P3 - DELTA_TICKS - DELTA_TICKS
 
     return Distances(
         d_P1P2=_tof_to_metres(tof_P1P2, "A2_P1P2", seq),
@@ -180,9 +180,9 @@ def calc_distances_a3(rt: RoundTimestamps) -> Distances:
     D_A1 = corrected_d(ci[3])   # Msg4 from A1
     D_A2 = corrected_d(ci[5])   # Msg6 from A2
 
-    tof_P1P3 = (T[3] - T[2] - D_A1) / 2.0
-    tof_P2P3 = (T[5] - T[4] - D_A2) / 2.0
-    tof_P1P2 = (T[1] - T[0]) + (T[3] - T[5]) / 2.0
+    tof_P1P3 = (T[3] - T[2] - DELTA_TICKS) / 2.0
+    tof_P2P3 = (T[5] - T[4] - DELTA_TICKS) / 2.0
+    tof_P1P2 = (T[1] - T[0]) + (T[3] - T[2] - T[5] + T[4] - DELTA_TICKS - DELTA_TICKS) / 2.0
 
     # A3's P1P2 formula can produce larger negative noise — use a relaxed
     # lower bound to avoid spurious -1 returns on valid short distances.
@@ -367,6 +367,8 @@ class SerialBridge:
                 self._handle_non_ts(line)
                 continue
 
+            log.debug("FW> %s", line)   # echo raw TS line in verbose mode
+
             rt = parse_ts_line(line)
             if rt is None:
                 log.warning("Malformed TS line: %r", line)
@@ -384,10 +386,8 @@ class SerialBridge:
                 f"DIST,{rt.role},{rt.seq},"
                 f"{dist.d_P1P2:.4f},{dist.d_P1P3:.4f},{dist.d_P2P3:.4f}"
             )
+            log.debug(out)   # verbose: distance line also visible on stderr, tagged by logger
             print(out, flush=True)
-            if self.log_file:
-                self.log_file.write(out + "\n")
-                self.log_file.flush()
 
     def close(self):
         if self._ser and self._ser.is_open:
